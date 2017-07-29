@@ -8,7 +8,6 @@ const W = canvas.width;
 const H = canvas.height;
 
 let gameStarted = null;
-
 let rightPressed = false;
 let leftPressed = false;
 
@@ -49,8 +48,6 @@ const generateBricks = () => {
         }
     }
 }
-
-generateBricks();
 
 const printCtxCoords = (ctx, x, y, ctxWidth, ctxHeight) => {
     const text = `(${x}, ${y})`;
@@ -123,53 +120,64 @@ const checkCollision = () => {
     );
 }
 
+const handleGame = () => {
+    // handle Right and Left wall
+    if (x + dx < ballRadius || x + dx > W - ballRadius) {
+        dx = -dx;
+    }
+
+    // handle Top and Bottom wall
+    if (y + dy < ballRadius) {
+        dy = -dy;
+    } else if (y + dy > H - ballRadius - paddleHeight) {
+        if (x > paddleX  && x < paddleX + paddleWidth) {
+            dy = -dy;
+        } else {
+            console.log(x, paddleX);
+            gameStarted = false;
+        }
+    };
+
+    if (rightPressed && paddleX < W - paddleWidth) {
+        paddleX += 7;
+    }
+
+    if (leftPressed && paddleX > 0) {
+        paddleX -= 7;
+    }
+
+    x += dx;
+    y += dy;
+}
+
+const restoreBricks = () => {
+    bricks.forEach(brickRow =>
+        brickRow.forEach(brick => brick.status = 1));
+}
+
+const resetGame = () => {
+    x = W / 2;
+    y = H - 30;
+    paddleX = (W - 75) / 2;
+    restoreBricks();
+}
+
+generateBricks();
+
 const draw = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawAllBricks();
     checkCollision();
     drawPaddle();
     drawBall();
-    // balls starts moving if game started
-    if (gameStarted) {
-        // handle Right and Left wall
-        if (x + dx < ballRadius || x + dx > W - ballRadius) {
-            dx = -dx;
-        }
 
-        // handle Top and Bottom wall
-        if (y + dy < ballRadius) {
-            dy = -dy;
-        } else if (y + dy > H - ballRadius - paddleHeight) {
-            if (x > paddleX  && x < paddleX + paddleWidth) {
-                dy = -dy;
-            } else {
-                console.log(x, paddleX);
-                gameStarted = false;
-            }
-        };
-
-        if (rightPressed && paddleX < W - paddleWidth) {
-            paddleX += 7;
-        }
-
-        if (leftPressed && paddleX > 0) {
-            paddleX -= 7;
-        }
-
-        x += dx;
-        y += dy;
-
-    } else if (gameStarted === false){
-        clearInterval(timerId)
-        x = W / 2;
-        y = H - 30;
-        paddleX = (W - 75) / 2;
+    if (gameStarted === true) {
+        handleGame();
+    } else if (gameStarted === false) {
+        resetGame();
     }
+
+    window.requestAnimationFrame(draw);
 }
 
-var timerId = setInterval(draw, 10);
-
-
-window.stopGame = function () {
-    clearInterval(timerId);
-}
+draw();
